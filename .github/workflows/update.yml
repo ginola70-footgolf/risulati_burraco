@@ -1,0 +1,51 @@
+name: Aggiorna Partite Burraco
+
+on:
+  # Esegue ogni ora automaticamente
+  schedule:
+    - cron: '0 * * * *'
+
+  # Permette di avviare manualmente dalla tab Actions
+  workflow_dispatch:
+
+permissions:
+  contents: write   # Necessario per fare git push di partite.json
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installa dipendenze
+        run: pip install requests beautifulsoup4
+
+      - name: Esegui scraper
+        env:
+          BURRACO_USER: ${{ secrets.BURRACO_USER }}
+          BURRACO_PASS: ${{ secrets.BURRACO_PASS }}
+        run: python scraper.py
+
+      - name: Commit e push di partite.json
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/partite.json
+          # Commita solo se ci sono modifiche reali
+          git diff --cached --quiet || git commit -m "♠ Aggiornamento partite $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
+
+      - name: Carica debug HTML come artefatto (solo in caso di errore)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: docs/debug_p0.html
+          retention-days: 7
