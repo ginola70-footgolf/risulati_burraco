@@ -3,7 +3,7 @@ name: Aggiorna Partite Burraco
 on:
   # Esegue ogni ora automaticamente
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 0 * * *'
 
   # Permette di avviare manualmente dalla tab Actions
   workflow_dispatch:
